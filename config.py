@@ -16,8 +16,8 @@ BASE_DIR = Path(__file__).parent
 DB_PATH = os.path.join(BASE_DIR, "data", "attendance.db")
 
 # Application settings
-APP_NAME = "Intern Attendance Tracker"
-COMPANY_NAME = "Corporate Organization"
+APP_NAME = "Blaze"
+COMPANY_NAME = "Intelligrip Technologies Pvt. Ltd."
 LOGO_PATH = os.path.join(BASE_DIR, "static", "logo.png")
 
 # Session state keys

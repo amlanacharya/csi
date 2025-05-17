@@ -13,7 +13,7 @@ def format_time(timestamp):
     """Format timestamp for display."""
     if not timestamp:
         return "-"
-    
+
     if isinstance(timestamp, str):
         try:
             dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
@@ -21,19 +21,28 @@ def format_time(timestamp):
             return timestamp
     else:
         dt = timestamp
-    
+
     return dt.strftime("%I:%M %p")
 
-def format_date(date_str):
+def format_date(date_val):
     """Format date for display."""
-    if not date_str:
+    if not date_val:
         return "-"
-    
-    try:
-        dt = datetime.strptime(date_str, "%Y-%m-%d")
-        return dt.strftime("%b %d, %Y")
-    except ValueError:
-        return date_str
+
+    # Handle pandas Timestamp objects
+    if hasattr(date_val, 'strftime'):
+        return date_val.strftime("%b %d, %Y")
+
+    # Handle string dates
+    if isinstance(date_val, str):
+        try:
+            dt = datetime.strptime(date_val, "%Y-%m-%d")
+            return dt.strftime("%b %d, %Y")
+        except ValueError:
+            return date_val
+
+    # Return as is for other types
+    return str(date_val)
 
 def get_date_range(days=30):
     """Get date range for filtering (default: last 30 days)."""
@@ -44,11 +53,11 @@ def get_date_range(days=30):
 def export_to_excel(df, filename="export.xlsx"):
     """
     Export DataFrame to Excel file and provide download link.
-    
+
     Args:
         df: Pandas DataFrame to export
         filename: Name of the Excel file
-    
+
     Returns:
         Download link for the Excel file
     """
@@ -60,7 +69,7 @@ def export_to_excel(df, filename="export.xlsx"):
             column_width = max(df[column].astype(str).map(len).max(), len(column))
             col_idx = df.columns.get_loc(column)
             writer.sheets['Sheet1'].set_column(col_idx, col_idx, column_width)
-    
+
     excel_data = output.getvalue()
     b64 = base64.b64encode(excel_data).decode()
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">Download Excel file</a>'
@@ -69,11 +78,11 @@ def export_to_excel(df, filename="export.xlsx"):
 def export_to_csv(df, filename="export.csv"):
     """
     Export DataFrame to CSV file and provide download link.
-    
+
     Args:
         df: Pandas DataFrame to export
         filename: Name of the CSV file
-    
+
     Returns:
         Download link for the CSV file
     """
@@ -82,16 +91,8 @@ def export_to_csv(df, filename="export.csv"):
     href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">Download CSV file</a>'
     return href
 
-def apply_theme():
-    """Apply custom theme to the Streamlit app."""
-    # Set page config
-    st.set_page_config(
-        page_title=config.APP_NAME,
-        page_icon="📊",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    
+def apply_custom_css():
+    """Apply custom CSS to the Streamlit app."""
     # Custom CSS
     st.markdown("""
     <style>
@@ -170,6 +171,10 @@ def apply_theme():
     </style>
     """, unsafe_allow_html=True)
 
+def apply_theme():
+    """Apply theme to the Streamlit app (for backward compatibility)."""
+    apply_custom_css()
+
 def display_logo():
     """Display the company logo."""
     if os.path.exists(config.LOGO_PATH):
@@ -185,7 +190,7 @@ def display_subheader(title):
     """Display a subheader with the given title."""
     st.markdown(f'<h2 class="sub-header">{title}</h2>', unsafe_allow_html=True)
 
-def display_card(content, key=None):
+def display_card(content):
     """Display content in a card."""
     st.markdown(f'<div class="card">{content}</div>', unsafe_allow_html=True)
 

@@ -8,22 +8,22 @@ import config
 def login(username, password):
     """
     Authenticate a user and set up session state.
-    
+
     Args:
         username: The username to authenticate
         password: The password to verify
-        
+
     Returns:
         bool: True if authentication successful, False otherwise
     """
     user = db.verify_user(username, password)
-    
+
     if user:
         st.session_state[config.USER_SESSION_KEY] = user
         st.session_state[config.AUTH_STATUS_KEY] = True
         st.session_state[config.USER_ROLE_KEY] = user['role']
         return True
-    
+
     return False
 
 def logout():
@@ -47,10 +47,10 @@ def get_user_role():
 def require_auth(role=None):
     """
     Decorator to require authentication for a page.
-    
+
     Args:
         role: Optional role requirement (admin or intern)
-    
+
     Returns:
         The original function if authenticated, or redirects to login
     """
@@ -60,12 +60,12 @@ def require_auth(role=None):
                 st.warning("Please log in to access this page.")
                 st.stop()
                 return
-            
+
             if role and get_user_role() != role:
                 st.error("You don't have permission to access this page.")
                 st.stop()
                 return
-            
+
             return func(*args, **kwargs)
         return wrapper
     return decorator

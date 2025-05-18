@@ -75,7 +75,7 @@ def show():
             if st.button("Check In", key="check_in"):
                 if db.record_check_in(user['id']):
                     st.success("Check-in recorded successfully!")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("Failed to record check-in.")
 
@@ -84,7 +84,7 @@ def show():
             if st.button("Check Out", key="check_out"):
                 if db.record_check_out(user['id']):
                     st.success("Check-out recorded successfully!")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("Failed to record check-out.")
 
@@ -174,29 +174,101 @@ def show():
         fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
         st.plotly_chart(fig, use_container_width=True)
 
-        # Day-wise attendance
-        day_counts = df.groupby('day').size().reset_index(name='count')
-        day_counts.columns = ['Day', 'Count']
+        # Calendar-like attendance visualization
+        st.markdown("<h3>Attendance Calendar</h3>", unsafe_allow_html=True)
 
-        # Define day order
-        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-        day_counts['Day'] = pd.Categorical(day_counts['Day'], categories=day_order, ordered=True)
-        day_counts = day_counts.sort_values('Day')
+        # Create a date range for the selected period
+        date_range = pd.date_range(start=start_date, end=end_date)
 
-        fig = px.bar(
-            day_counts,
-            x='Day',
-            y='Count',
-            title='Day-wise Attendance',
-            color='Count',
-            color_continuous_scale='Viridis'
+        # Create a DataFrame with all dates in the range
+        calendar_df = pd.DataFrame({'date': date_range})
+        calendar_df['day'] = calendar_df['date'].dt.day_name()
+        calendar_df['week'] = calendar_df['date'].dt.isocalendar().week
+        calendar_df['month'] = calendar_df['date'].dt.month_name()
+        calendar_df['day_num'] = calendar_df['date'].dt.day
+
+        # Merge with attendance data
+        calendar_df['date_str'] = calendar_df['date'].dt.strftime('%Y-%m-%d')
+        attendance_df = pd.DataFrame(attendance_data)
+        attendance_df['date_str'] = pd.to_datetime(attendance_df['date']).dt.strftime('%Y-%m-%d')
+
+        # Merge to get status for each day
+        calendar_df = calendar_df.merge(
+            attendance_df[['date_str', 'status']],
+            on='date_str',
+            how='left'
         )
+
+        # Fill missing status with 'Absent'
+        calendar_df['status'].fillna(config.STATUS_ABSENT, inplace=True)
+
+        # Define color mapping for different statuses
+        color_map = {
+            config.STATUS_PRESENT: '#28a745',  # Green
+            config.STATUS_LATE: '#ffc107',     # Yellow
+            config.STATUS_HALF_DAY: '#17a2b8', # Blue
+            config.STATUS_ABSENT: '#dc3545'    # Red
+        }
+
+        # Create a numeric value for each status for the heatmap
+        status_value_map = {
+            config.STATUS_PRESENT: 3,
+            config.STATUS_LATE: 2,
+            config.STATUS_HALF_DAY: 1,
+            config.STATUS_ABSENT: 0
+        }
+
+        calendar_df['status_value'] = calendar_df['status'].map(status_value_map)
+
+        # Create a heatmap calendar
+        # Group by week and day for the heatmap
+        calendar_pivot = calendar_df.pivot_table(
+            index='week',
+            columns='day',
+            values='status_value',
+            aggfunc='first'
+        )
+
+        # Reorder columns to start with Monday
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        calendar_pivot = calendar_pivot.reindex(columns=day_order)
+
+        # Create the heatmap
+        fig = px.imshow(
+            calendar_pivot,
+            labels=dict(x="Day of Week", y="Week", color="Status"),
+            x=calendar_pivot.columns,
+            y=calendar_pivot.index,
+            color_continuous_scale=[
+                [0.0, color_map[config.STATUS_ABSENT]],
+                [0.33, color_map[config.STATUS_HALF_DAY]],
+                [0.66, color_map[config.STATUS_LATE]],
+                [1.0, color_map[config.STATUS_PRESENT]]
+            ],
+            title="Attendance Calendar"
+        )
+
+        # Add date annotations to the heatmap
+        for i, week in enumerate(calendar_pivot.index):
+            for j, day in enumerate(calendar_pivot.columns):
+                day_data = calendar_df[(calendar_df['week'] == week) & (calendar_df['day'] == day)]
+                if not day_data.empty:
+                    day_num = day_data.iloc[0]['day_num']
+                    status = day_data.iloc[0]['status']
+                    fig.add_annotation(
+                        x=j,
+                        y=i,
+                        text=f"{day_num}<br>{status}",
+                        showarrow=False,
+                        font=dict(color="white" if status in [config.STATUS_ABSENT, config.STATUS_PRESENT] else "black")
+                    )
+
+        # Update layout
         fig.update_layout(
-            xaxis_title="Day of Week",
-            yaxis_title="Count",
             plot_bgcolor='rgba(0,0,0,0)',
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=True, gridcolor='rgba(200,200,200,0.2)')
+            height=400,
+            xaxis=dict(side="top"),
+            coloraxis_showscale=False
         )
         st.plotly_chart(fig, use_container_width=True)
     else:

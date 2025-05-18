@@ -72,7 +72,7 @@ def show():
             if st.button("Check In Now", key="check_in_now"):
                 if db.record_check_in(user['id']):
                     utils.success_message("Check-in recorded successfully!")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     utils.error_message("Failed to record check-in.")
         else:
@@ -88,7 +88,7 @@ def show():
             if st.button("Check Out Now", key="check_out_now"):
                 if db.record_check_out(user['id']):
                     utils.success_message("Check-out recorded successfully!")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     utils.error_message("Failed to record check-out.")
         elif not attendance or not attendance[0]['check_in_time']:

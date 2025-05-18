@@ -64,7 +64,7 @@ def main():
                 st.markdown("---")
                 if st.button("Logout"):
                     auth.logout()
-                    st.experimental_rerun()
+                    st.rerun()
             else:
                 # Intern navigation
                 st.markdown("### Navigation")
@@ -77,7 +77,7 @@ def main():
                 st.markdown("---")
                 if st.button("Logout"):
                     auth.logout()
-                    st.experimental_rerun()
+                    st.rerun()
 
         # Display selected page
         if role == config.ROLE_ADMIN:

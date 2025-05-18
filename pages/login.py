@@ -29,7 +29,7 @@ def show():
             else:
                 if auth.login(username, password):
                     st.success("Login successful!")
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("Invalid username or password.")
 

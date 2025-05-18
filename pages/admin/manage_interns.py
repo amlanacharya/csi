@@ -93,7 +93,7 @@ def show():
                         if submit:
                             if db.update_user(selected_intern['id'], name, email, department):
                                 st.success("Intern details updated successfully!")
-                                st.experimental_rerun()
+                                st.rerun()
                             else:
                                 st.error("Failed to update intern details.")
 
@@ -144,7 +144,7 @@ def show():
                     if db.add_user(username, password, config.ROLE_INTERN, name, email, department):
                         st.success(f"Intern '{name}' added successfully!")
                         # Clear form
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.error("Failed to add intern. Username or email may already exist.")
 
@@ -181,7 +181,7 @@ def show():
                 else:
                     if db.add_department(dept_name):
                         st.success(f"Department '{dept_name}' added successfully!")
-                        st.experimental_rerun()
+                        st.rerun()
                     else:
                         st.error("Failed to add department. It may already exist.")
 

@@ -21,17 +21,18 @@ def show():
     user = auth.get_current_user()
     st.markdown(f"Welcome, **{user['name']}**!")
 
-    # Date range selector
+    # Date range selector (using Indian time)
+    now = utils.get_indian_time()
     col1, col2 = st.columns(2)
     with col1:
         start_date = st.date_input(
             "Start Date",
-            value=datetime.now().date() - timedelta(days=30)
+            value=now.date() - timedelta(days=30)
         )
     with col2:
         end_date = st.date_input(
             "End Date",
-            value=datetime.now().date()
+            value=now.date()
         )
 
     # Department filter

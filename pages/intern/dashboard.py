@@ -21,15 +21,16 @@ def show():
     user = auth.get_current_user()
     st.markdown(f"Welcome, **{user['name']}**!")
 
-    # Current date and time
-    now = datetime.now()
+    # Current date and time (using Indian time - GMT+5:30)
+    now = utils.get_indian_time()
     current_date = now.strftime("%A, %B %d, %Y")
     current_time = now.strftime("%I:%M %p")
+    timezone_info = "IST (GMT+5:30)"
 
     st.markdown(f"""
     <div class="card">
         <h3>Today's Date: {current_date}</h3>
-        <h3>Current Time: {current_time}</h3>
+        <h3>Current Time: {current_time} ({timezone_info})</h3>
     </div>
     """, unsafe_allow_html=True)
 

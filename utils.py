@@ -4,10 +4,11 @@ Utility functions for the attendance tracking system.
 import os
 import pandas as pd
 import streamlit as st
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import base64
 from io import BytesIO
 import config
+import pytz
 
 def format_time(timestamp):
     """Format timestamp for display."""
@@ -49,6 +50,17 @@ def get_date_range(days=30):
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=days)
     return start_date, end_date
+
+def get_indian_time():
+    """Get current time in India (GMT+5:30)."""
+    # Create a timezone object for India (GMT+5:30)
+    india_tz = pytz.timezone('Asia/Kolkata')  # Kolkata is GMT+5:30
+
+    # Get current UTC time and convert to Indian time
+    utc_now = datetime.now(pytz.UTC)
+    india_time = utc_now.astimezone(india_tz)
+
+    return india_time
 
 def export_to_excel(df, filename="export.xlsx"):
     """

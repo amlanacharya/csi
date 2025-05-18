@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 import config
 from passlib.hash import pbkdf2_sha256
+import pytz
 
 # Ensure data directory exists
 os.makedirs(os.path.dirname(config.DB_PATH), exist_ok=True)
@@ -178,10 +179,14 @@ def change_password(user_id, new_password):
 # Attendance operations
 def record_check_in(user_id, date=None, time=None):
     """Record check-in time for a user."""
+    # Get current time in India (GMT+5:30)
+    india_tz = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(pytz.UTC).astimezone(india_tz)
+
     if date is None:
-        date = datetime.now().strftime("%Y-%m-%d")
+        date = now.strftime("%Y-%m-%d")
     if time is None:
-        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        time = now.strftime("%Y-%m-%d %H:%M:%S")
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -209,10 +214,14 @@ def record_check_in(user_id, date=None, time=None):
 
 def record_check_out(user_id, date=None, time=None):
     """Record check-out time for a user."""
+    # Get current time in India (GMT+5:30)
+    india_tz = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(pytz.UTC).astimezone(india_tz)
+
     if date is None:
-        date = datetime.now().strftime("%Y-%m-%d")
+        date = now.strftime("%Y-%m-%d")
     if time is None:
-        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        time = now.strftime("%Y-%m-%d %H:%M:%S")
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -238,13 +247,17 @@ def record_check_out(user_id, date=None, time=None):
 
 def determine_status(check_in_time):
     """Determine attendance status based on check-in time."""
-    if isinstance(check_in_time, str):
-        check_in_time = datetime.strptime(check_in_time, "%Y-%m-%d %H:%M:%S")
+    india_tz = pytz.timezone('Asia/Kolkata')
 
-    work_start = datetime.strptime(
-        f"{check_in_time.strftime('%Y-%m-%d')} {config.WORK_START_TIME}:00",
-        "%Y-%m-%d %H:%M:%S"
-    )
+    if isinstance(check_in_time, str):
+        # Parse the string time and make it timezone-aware
+        check_in_time = datetime.strptime(check_in_time, "%Y-%m-%d %H:%M:%S")
+        check_in_time = india_tz.localize(check_in_time)
+
+    # Create work start time with the same date as check-in time
+    work_start_str = f"{check_in_time.strftime('%Y-%m-%d')} {config.WORK_START_TIME}:00"
+    work_start = datetime.strptime(work_start_str, "%Y-%m-%d %H:%M:%S")
+    work_start = india_tz.localize(work_start)
 
     # If check-in is later than threshold, mark as late
     if check_in_time > work_start:

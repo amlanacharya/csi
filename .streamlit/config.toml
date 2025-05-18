@@ -1,0 +1,21 @@
+[server]
+# Enable CORS for the development server
+enableCORS = true
+
+# Enable session state serialization
+enableXsrfProtection = true
+
+# Set the headless mode
+headless = true
+
+[browser]
+# Set the server to serve the app at this address
+serverAddress = "localhost"
+
+[theme]
+# Set the theme colors
+primaryColor = "#1E88E5"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"

@@ -4,6 +4,7 @@ Login page for the attendance tracking system.
 import streamlit as st
 import auth
 import utils
+import time
 # config not used directly in this file
 
 def show():
@@ -11,6 +12,20 @@ def show():
     utils.apply_custom_css()
     utils.display_logo()
     utils.display_header("Intern Attendance Tracker")
+
+    # Check if we need to redirect after login
+    if "login_success" in st.session_state and st.session_state.login_success:
+        st.session_state.login_success = False
+        # Use JavaScript to reload the page instead of st.rerun()
+        st.markdown(
+            """
+            <script>
+                window.parent.location.reload();
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
+        st.stop()
 
     st.markdown("""
     <div class="card">
@@ -29,7 +44,19 @@ def show():
             else:
                 if auth.login(username, password):
                     st.success("Login successful!")
-                    st.rerun()
+                    # Set a flag in session state instead of using st.rerun()
+                    st.session_state.login_success = True
+                    # Use a small delay to ensure the success message is shown
+                    time.sleep(0.5)
+                    # Reload the page using JavaScript
+                    st.markdown(
+                        """
+                        <script>
+                            window.parent.location.reload();
+                        </script>
+                        """,
+                        unsafe_allow_html=True
+                    )
                 else:
                     st.error("Invalid username or password.")
 

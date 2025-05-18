@@ -64,7 +64,15 @@ def main():
                 st.markdown("---")
                 if st.button("Logout"):
                     auth.logout()
-                    st.rerun()
+                    # Use JavaScript to reload the page instead of st.rerun()
+                    st.markdown(
+                        """
+                        <script>
+                            window.parent.location.reload();
+                        </script>
+                        """,
+                        unsafe_allow_html=True
+                    )
             else:
                 # Intern navigation
                 st.markdown("### Navigation")
@@ -77,7 +85,15 @@ def main():
                 st.markdown("---")
                 if st.button("Logout"):
                     auth.logout()
-                    st.rerun()
+                    # Use JavaScript to reload the page instead of st.rerun()
+                    st.markdown(
+                        """
+                        <script>
+                            window.parent.location.reload();
+                        </script>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
         # Display selected page
         if role == config.ROLE_ADMIN:

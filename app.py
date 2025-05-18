@@ -16,6 +16,7 @@ st.set_page_config(
 import config
 import utils
 import auth
+import database as db
 
 # Import pages
 from pages import login
@@ -25,8 +26,16 @@ from pages.admin import reports
 from pages.intern import dashboard as intern_dashboard
 from pages.intern import attendance
 
+# Initialize database
+db.init_db()
+
 # Initialize session state
-config.init_session_state()
+if "initialized" not in st.session_state:
+    config.init_session_state()
+    st.session_state.initialized = True
+
+# Debug information (comment out in production)
+# st.sidebar.write("Session State:", st.session_state)
 
 def main():
     """Main application entry point."""
@@ -64,15 +73,8 @@ def main():
                 st.markdown("---")
                 if st.button("Logout"):
                     auth.logout()
-                    # Use JavaScript to reload the page instead of st.rerun()
-                    st.markdown(
-                        """
-                        <script>
-                            window.parent.location.reload();
-                        </script>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    # Use st.rerun() instead of JavaScript
+                    st.rerun()
             else:
                 # Intern navigation
                 st.markdown("### Navigation")
@@ -85,15 +87,8 @@ def main():
                 st.markdown("---")
                 if st.button("Logout"):
                     auth.logout()
-                    # Use JavaScript to reload the page instead of st.rerun()
-                    st.markdown(
-                        """
-                        <script>
-                            window.parent.location.reload();
-                        </script>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    # Use st.rerun() instead of JavaScript
+                    st.rerun()
 
         # Display selected page
         if role == config.ROLE_ADMIN:

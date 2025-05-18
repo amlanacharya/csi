@@ -5,7 +5,7 @@ import streamlit as st
 import auth
 import utils
 import time
-# config not used directly in this file
+import config  # Import config for debugging
 
 def show():
     """Display the login page."""
@@ -13,19 +13,13 @@ def show():
     utils.display_logo()
     utils.display_header("Intern Attendance Tracker")
 
+    # Debug information (comment out in production)
+    # st.sidebar.write("Session State:", st.session_state)
+
     # Check if we need to redirect after login
-    if "login_success" in st.session_state and st.session_state.login_success:
-        st.session_state.login_success = False
-        # Use JavaScript to reload the page instead of st.rerun()
-        st.markdown(
-            """
-            <script>
-                window.parent.location.reload();
-            </script>
-            """,
-            unsafe_allow_html=True
-        )
-        st.stop()
+    if auth.is_authenticated():
+        # If already authenticated, just stop here - main app will handle the rest
+        return
 
     st.markdown("""
     <div class="card">
@@ -44,21 +38,13 @@ def show():
             else:
                 if auth.login(username, password):
                     st.success("Login successful!")
-                    # Set a flag in session state instead of using st.rerun()
-                    st.session_state.login_success = True
                     # Use a small delay to ensure the success message is shown
                     time.sleep(0.5)
-                    # Reload the page using JavaScript
-                    st.markdown(
-                        """
-                        <script>
-                            window.parent.location.reload();
-                        </script>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    # Use st.rerun() instead of JavaScript
+                    st.rerun()
                 else:
                     st.error("Invalid username or password.")
+                    st.info("Default admin credentials: admin / admin123")
 
     st.markdown("</div>", unsafe_allow_html=True)
 

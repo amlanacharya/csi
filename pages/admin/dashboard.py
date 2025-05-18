@@ -125,6 +125,122 @@ def show():
             fig.update_layout(plot_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True)
 
+        # Attendance Calendar
+        st.markdown("<h2 class='sub-header'>Attendance Calendar</h2>", unsafe_allow_html=True)
+
+        # Create a date range for the selected period
+        date_range = pd.date_range(start=start_date, end=end_date)
+
+        # Create a DataFrame with all dates in the range
+        calendar_df = pd.DataFrame({'date': date_range})
+        calendar_df['day'] = calendar_df['date'].dt.day_name()
+        calendar_df['week'] = calendar_df['date'].dt.isocalendar().week
+        calendar_df['month'] = calendar_df['date'].dt.month_name()
+        calendar_df['day_num'] = calendar_df['date'].dt.day
+
+        # Merge with attendance data
+        calendar_df['date_str'] = calendar_df['date'].dt.strftime('%Y-%m-%d')
+        attendance_df = pd.DataFrame(attendance_data)
+        attendance_df['date_str'] = pd.to_datetime(attendance_df['date']).dt.strftime('%Y-%m-%d')
+
+        # Count attendance by date and status
+        status_by_date = attendance_df.groupby(['date_str', 'status']).size().reset_index(name='count')
+
+        # Get the most common status for each date
+        status_by_date = status_by_date.sort_values('count', ascending=False)
+        status_by_date = status_by_date.drop_duplicates('date_str')
+
+        # Merge to get status for each day
+        calendar_df = calendar_df.merge(
+            status_by_date[['date_str', 'status']],
+            on='date_str',
+            how='left'
+        )
+
+        # Fill missing status with 'Absent'
+        calendar_df['status'].fillna(config.STATUS_ABSENT, inplace=True)
+
+        # Define color mapping for different statuses
+        color_map = {
+            config.STATUS_PRESENT: '#28a745',  # Green
+            config.STATUS_LATE: '#ffc107',     # Yellow
+            config.STATUS_HALF_DAY: '#17a2b8', # Blue
+            config.STATUS_ABSENT: '#dc3545'    # Red
+        }
+
+        # Create a numeric value for each status for the heatmap
+        status_value_map = {
+            config.STATUS_PRESENT: 3,
+            config.STATUS_LATE: 2,
+            config.STATUS_HALF_DAY: 1,
+            config.STATUS_ABSENT: 0
+        }
+
+        calendar_df['status_value'] = calendar_df['status'].map(status_value_map)
+
+        # Create a heatmap calendar
+        # Group by week and day for the heatmap
+        calendar_pivot = calendar_df.pivot_table(
+            index='week',
+            columns='day',
+            values='status_value',
+            aggfunc='first'
+        )
+
+        # Reorder columns to start with Monday
+        day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        calendar_pivot = calendar_pivot.reindex(columns=day_order)
+
+        # Create the heatmap
+        fig = px.imshow(
+            calendar_pivot,
+            labels=dict(x="Day of Week", y="Week", color="Status"),
+            x=calendar_pivot.columns,
+            y=calendar_pivot.index,
+            color_continuous_scale=[
+                [0.0, color_map[config.STATUS_ABSENT]],
+                [0.33, color_map[config.STATUS_HALF_DAY]],
+                [0.66, color_map[config.STATUS_LATE]],
+                [1.0, color_map[config.STATUS_PRESENT]]
+            ],
+            title="Attendance Calendar"
+        )
+
+        # Add date annotations to the heatmap
+        for i, week in enumerate(calendar_pivot.index):
+            for j, day in enumerate(calendar_pivot.columns):
+                day_data = calendar_df[(calendar_df['week'] == week) & (calendar_df['day'] == day)]
+                if not day_data.empty:
+                    day_num = day_data.iloc[0]['day_num']
+                    status = day_data.iloc[0]['status']
+                    count = attendance_df[attendance_df['date_str'] == day_data.iloc[0]['date_str']].shape[0]
+                    fig.add_annotation(
+                        x=j,
+                        y=i,
+                        text=f"{day_num}<br>{count} {status}",
+                        showarrow=False,
+                        font=dict(color="white" if status in [config.STATUS_ABSENT, config.STATUS_PRESENT] else "black")
+                    )
+
+        # Update layout
+        fig.update_layout(
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=400,
+            xaxis=dict(side="top"),
+            coloraxis_showscale=False
+        )
+
+        # Add a legend/color guide
+        st.markdown("<div style='display: flex; justify-content: center; margin-top: 10px;'>", unsafe_allow_html=True)
+        for status, color in color_map.items():
+            st.markdown(
+                f"<div style='margin: 0 10px;'><span style='display: inline-block; width: 15px; height: 15px; background-color: {color}; margin-right: 5px;'></span>{status}</div>",
+                unsafe_allow_html=True
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        st.plotly_chart(fig, use_container_width=True)
+
         # Recent activity
         st.markdown("<h2 class='sub-header'>Recent Activity</h2>", unsafe_allow_html=True)
         recent_df = df.sort_values('date', ascending=False).head(10)

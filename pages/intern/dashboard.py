@@ -270,6 +270,15 @@ def show():
             xaxis=dict(side="top"),
             coloraxis_showscale=False
         )
+
+        # Add a legend/color guide
+        st.markdown("<div style='display: flex; justify-content: center; margin-top: 10px;'>", unsafe_allow_html=True)
+        for status, color in color_map.items():
+            st.markdown(
+                f"<div style='margin: 0 10px;'><span style='display: inline-block; width: 15px; height: 15px; background-color: {color}; margin-right: 5px;'></span>{status}</div>",
+                unsafe_allow_html=True
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No attendance data available for the selected date range.")
